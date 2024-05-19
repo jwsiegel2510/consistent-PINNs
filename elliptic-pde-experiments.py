@@ -21,7 +21,7 @@ Nlist = [5, 10, 15, 20, 25, 30]
 Ntest = 500
 
 ### Neural Network and training parameters
-width = 200
+width = 100
 depth = 8
 step_size = 0.001
 momentum = 0.9
@@ -246,11 +246,11 @@ def train(params, vals, vals_bdy, rhs_data, bdy_data, step, mom, loss_type, num_
     else:
       params, loss_value, velocities = update_consistent_loss(params, vals, vals_bdy, rhs_data, bdy_data, velocities, step, mom) 
     if epoch % step_decrease_int == step_decrease_int - 1:
-      step_size = step_size / 2
+      step = step / 2
   print('Final loss value achieved: %lf' % loss_value)
   return params
 
-def train_and_test(N, Ntest, u, lap_u, grad_u_x, grad_u_y, step_size, momentum, loss_type, step_count, decrease_interval, plot = True):
+def train_and_test(N, Ntest, u, lap_u, grad_u_x, grad_u_y, step_size, momentum, loss_type, step_count, decrease_interval, plot = False):
   # Initialize the network randomly.
   params = init_deep_network_params(width, depth, random.PRNGKey(0))
 
