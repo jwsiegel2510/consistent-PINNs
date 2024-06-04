@@ -8,15 +8,18 @@ Forthcoming, to be added soon
 
 Consider the Poisson equation:
 
-Delta u = f on Omega
-u = g on the boundary of Omega
+$\Delta u = f$ on $\Omega$
 
-W solve this equation using both the consistent PINNs and the original PINNs loss function. We test two examples, one where f = 0, i.e. u is harmonic, with exact solution given by
+$u = g$ on $\partial \Omega$
 
-u(x) = e^x * cos(pi * y),
+We solve this equation using both the consistent PINNs and the original PINNs loss function. We test two examples, one where $f = 0$, i.e. u is harmonic, with exact solution given by
 
-and the second, where g = 0, with exact solution given by
+$u(x) = e^x\cos(\pi y),$
 
-u(x) = 1000 * x * (1-x) * y * (1-y) * (x^2 + y^2)^(9/4).
+and the second, where $g = 0$, with exact solution given by
 
-This second example was specifically chosen so that the RHS f is not smooth. Based upon our experiments, using the consistent PINNs loss function results in errors which are about 3-5 times smaller than when using the original least squares PINNs loss function. Running the Python script **elliptic-pde-experiments.py** reproduces our experimental results.
+$u(x) = 1000x(1-x)y(1-y)(x^2 + y^2)^{9/4}.$
+
+This second example was specifically chosen so that the RHS f is not smooth and scaled so that its $L_\infty$-norm is about $1$. 
+
+Based upon our experiments, using the consistent PINNs loss function results in errors which are about 3-5 times smaller than when using the original least squares PINNs loss function. Running the Python script **elliptic-pde-experiments.py** reproduces our experimental results.
