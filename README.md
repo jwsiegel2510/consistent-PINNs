@@ -19,4 +19,4 @@ and the second, where g = 0, with exact solution given by
 
 u(x) = 1000 * x * (1-x) * y * (1-y) * (x^2 + y^2)^(9/4).
 
-This second example was specifically chosen so that the RHS f is not smooth. Based upon our experiments, using the consistent PINNs loss function results in errors which are about 3-5 times smaller than when using the original PINNs loss function, despite comparable final loss values attained for both methods. Running the Python script **elliptic-pde-experiments.py** reproduces our experimental results.
+This second example was specifically chosen so that the RHS f is not smooth. Based upon our experiments, using the consistent PINNs loss function results in errors which are about 3-5 times smaller than when using the original least squares PINNs loss function. Running the Python script **elliptic-pde-experiments.py** reproduces our experimental results.
