@@ -18,7 +18,7 @@ $u(x) = e^x\cos(\pi y),$
 
 and the second, where $g = 0$, with exact solution given by
 
-$u(x) = 1000x(1-x)y(1-y)(x^2 + y^2)^{9/4}.$
+$u(x) = 1000x(1-x)y(1-y)((x - 1/2)^2 + (y - 1/2)^2)^{9/4}.$
 
 This second example was specifically chosen so that the RHS f is not smooth and scaled so that its $L_\infty$-norm is about $1$. 
 
