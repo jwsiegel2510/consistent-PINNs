@@ -218,7 +218,7 @@ def loss(params, vals, vals_bdy, rhs_data, bdy_data, gamma, h12_weight):
 ### Construct the Training Algorithm which is a variant of rescaled gradient descent.
 @jit
 def update_consistent_loss(params, vals, vals_bdy, rhs_data, bdy_data, velocities, step, mom):
-  loss_value, grads = value_and_grad(loss)(params, vals, vals_bdy, rhs_data, bdy_data, 1, 1)
+  loss_value, grads = value_and_grad(loss)(params, vals, vals_bdy, rhs_data, bdy_data, 1.1, 1)
   if velocities == None:
     velocities = grads
   else:
@@ -285,6 +285,7 @@ def train_and_test(N, Ntest, u, lap_u, grad_u_x, grad_u_y, step_size, momentum, 
   error = (1.0/Ntest)*jnp.linalg.norm(exact_grads - nn_grads, 'fro') + (1.0/Ntest)*jnp.linalg.norm(jnp.reshape(nn_solution, jnp.shape(X_test)) - exact_solution)
 
   return error / solution_norm
+
 ### Run the experiments.
 for N in Nlist:
   print('Number of collocation points in each direction: %d' % N)
