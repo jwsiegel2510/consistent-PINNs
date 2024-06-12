@@ -8,7 +8,7 @@ Forthcoming, to be added soon
 
 Consider the Poisson equation:
 
-$\Delta u = f$ on $\Omega$
+$-\Delta u = f$ on $\Omega$
 
 $u = g$ on $\partial \Omega$
 
