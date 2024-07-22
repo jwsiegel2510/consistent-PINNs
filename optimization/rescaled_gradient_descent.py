@@ -1,6 +1,6 @@
 # Author: Jonathan Siegel
 #
-# Contains a neural network training algorithm which is a variant of rescaled gradient descent.
+# Contains a neural network training algorithm which is a ad-hoc variant of rescaled gradient descent.
 
 import math
 import jax.numpy as jnp

@@ -9,7 +9,7 @@ from utils import plot_values
 from experiments import generate_elliptic_experiment
 from networks import ResidualReLUkNetwork
 from loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
-from optimization import rgd_train
+from optimization import rgd_train, gauss_newton_train
 
 ### Tested number of colloation points in each direction and along the boundary.
 Nlist = [5, 10, 15, 20, 25, 30]
@@ -25,7 +25,7 @@ momentum = 0.9
 decrease_interval = 4000
 step_count = 40000
 
-def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_count, decrease_interval, plot = False):
+def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_count, decrease_interval, plot = True):
   # Initialize the network randomly.
   network = ResidualReLUkNetwork()
   params = network.init_deep_network_params(2, width, depth, random.PRNGKey(0))
@@ -37,23 +37,23 @@ def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_coun
   if loss_type == 'original':
     loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data)
   else:
-    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data)
+    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 1.1)
 
   # Train the network.
   params = rgd_train(params, network, loss, step_size, momentum, step_count, decrease_interval)
 
   # Calculate and return the relative H1 error.
-  nn_sol = batched_predict(params, coords_test)
+  nn_sol = network.batched_predict(params, coords_test)
   xp_test=jnp.linspace(0.,1.,Ntest)
   yp_test=jnp.linspace(0.,1.,Ntest)
 
   X_test, Y_test = jnp.meshgrid(xp_test, yp_test)
   if plot:
-    plot_values(X_test,Y_test,jnp.reshape(nn_solution,jnp.shape(X_test)))
-    plot_values(X_test,Y_test,exact_solution)
+    plot_values(X_test,Y_test,jnp.reshape(nn_sol,jnp.shape(X_test)))
+    plot_values(X_test,Y_test,sol)
 
   # Calculate the H1 error.
-  nn_grads = batched_grad_predict(params, coords_test)
+  nn_grads = network.batched_grad_predict(params, coords_test)
 
   solution_norm = (1.0/Ntest)*jnp.linalg.norm(sol_grads, 'fro') + (1.0/Ntest)*jnp.linalg.norm(sol)
   error = (1.0/Ntest)*jnp.linalg.norm(sol_grads - nn_grads, 'fro') + (1.0/Ntest)*jnp.linalg.norm(jnp.reshape(nn_sol, jnp.shape(X_test)) - sol)

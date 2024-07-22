@@ -38,7 +38,7 @@ class ResidualReLUkNetwork:
       weights and biases of the layer.
     """
     w_key, b_key = random.split(key)
-    return scale * random.normal(w_key, (n, m)), scale * random.normal(b_key, (n,))
+    return [scale * random.normal(w_key, (n, m)), scale * random.normal(b_key, (n,))]
 
   def init_deep_network_params(self, input_dim, n, d, key):
     """Initialize all layers for a deep neural network with width n, depth d, and the given input dimension.
@@ -79,16 +79,16 @@ class ResidualReLUkNetwork:
       output of the network.
     """
     activations = values
-    init_w, init_b = params[0]
+    [init_w, init_b] = params[0]
     outputs = jnp.dot(init_w,activations)
     outputs = outputs + init_b.reshape(outputs.shape)
     activations = tanh(outputs)
-    for w, b in params[1:-1]:
+    for [w, b] in params[1:-1]:
       outputs = jnp.dot(w, activations)
       outputs = outputs + b.reshape(outputs.shape)
       activations = activations + relu3(outputs)
 
-    final_w, final_b = params[-1]
+    [final_w, final_b] = params[-1]
     return (jnp.dot(final_w, activations) + final_b)
 
   # Cast the output to a scalar.
