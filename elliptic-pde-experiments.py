@@ -9,7 +9,7 @@ from utils import plot_values
 from experiments import generate_elliptic_experiment
 from networks import ResidualReLUkNetwork
 from loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
-from optimization import rgd_train, gauss_newton_train
+from optimization import rgd_train, natural_gradient_train
 
 ### Tested number of colloation points in each direction and along the boundary.
 Nlist = [5, 10, 15, 20, 25, 30]
@@ -25,7 +25,7 @@ momentum = 0.9
 decrease_interval = 4000
 step_count = 40000
 
-def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_count, decrease_interval, plot = True):
+def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_count, decrease_interval, plot = False):
   # Initialize the network randomly.
   network = ResidualReLUkNetwork()
   params = network.init_deep_network_params(2, width, depth, random.PRNGKey(0))

@@ -1,4 +1,4 @@
-# Author: Jonathan Siegel and Andrea Bonito
+# Author: Jonathan Siegel
 #
 # Constructs the residual reluk networks used in our tests on elliptic problems.
 

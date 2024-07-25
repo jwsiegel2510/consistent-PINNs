@@ -48,10 +48,10 @@ def update(params, velocities, network, loss, step, mom):
   if velocities == None:
     velocities = grads
   else:
-    velocities = [(mom * vw + (1-mom) * dw, mom * vb + (1-mom) * db)
-                  for (vw, vb), (dw, db) in zip(velocities, grads)]
-  return [(w - step * vw / jnp.max(jnp.abs(w)) / (jnp.max(jnp.abs(vw)) + 1e-5), b - step * vb * jnp.max(jnp.abs(b)) / (jnp.max(jnp.abs(vb)) + 1e-5))
-          for (w, b), (vw, vb) in zip(params, velocities)], loss_value, velocities
+    velocities = [[mom * vw + (1-mom) * dw, mom * vb + (1-mom) * db]
+                  for [vw, vb], [dw, db] in zip(velocities, grads)]
+  return [[w - step * vw * jnp.max(jnp.abs(w)) / (jnp.max(jnp.abs(vw)) + 1e-5), b - step * vb * jnp.max(jnp.abs(b)) / (jnp.max(jnp.abs(vb)) + 1e-5)]
+          for [w, b], [vw, vb] in zip(params, velocities)], loss_value, velocities
 
 def rgd_train(params, network, loss, step, mom, num_steps, step_decrease_int, verbose = False):
   """Train the neural network on the given loss function with the given hyperparameters.
@@ -72,7 +72,8 @@ def rgd_train(params, network, loss, step, mom, num_steps, step_decrease_int, ve
   for epoch in range(num_steps):
     params, loss_value, velocities = update(params, velocities, network, loss, step, mom)
     if epoch % step_decrease_int == step_decrease_int - 1:
-      step / 2
+      step /= 2
     if verbose:
       print('epoch: '+ str(epoch)+'   loss value: '+str(loss_value))
+  print('Final loss value achieved: %lf' % loss_value)
   return params

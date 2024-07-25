@@ -78,7 +78,7 @@ def evaluate_loss(vec_params, signature, network, loss):
   # Evaluate loss
   return loss.apply(lap_vals, bdy_vals)
 
-def evaluate_output(vec_params, signature, network, loss):
+def evaluate_laps(vec_params, signature, network, loss):
   """Evaluates the network and its laplacian output on the set of training points.
 
   Args:
@@ -88,16 +88,34 @@ def evaluate_output(vec_params, signature, network, loss):
     loss: loss function class
 
   Returns:
-    Value of the loss function
+    Values of the network laplacian.
   """
   params = restore(vec_params, signature)
   
   # Extract sample point coordinates from loss and evaluate network at sample points
   coords = loss.coords
-  bdy_coords = loss.bdy_coords
   lap_vals = network.batched_laplacians_predict(params, coords)
+  return lap_vals.flatten()
+
+def evaluate_bdy(vec_params, signature, network, loss):
+  """Evaluates the network and its laplacian output on the set of training points.
+
+  Args:
+    vec_params: vector of params
+    signature: nested list of tuples giving how to unpack the parameters
+    network: neural network class
+    loss: loss function class
+
+  Returns:
+    boundary_values of the network
+  """
+  params = restore(vec_params, signature)
+  
+  # Extract sample point coordinates from loss and evaluate network at sample points
+  bdy_coords = loss.bdy_coords
   bdy_vals = network.batched_predict(params, bdy_coords)
-  return jnp.concatenate((lap_vals.flatten(), bdy_vals.flatten()))
+  return bdy_vals.flatten()
+
 
 def update(params, velocities, network, loss, step, regularization, mom):
   """ Performs one step of Gauss-Newton iteration.
@@ -117,8 +135,11 @@ def update(params, velocities, network, loss, step, regularization, mom):
   vec_params = vec_list[0]
   signature = vec_list[1]
   loss_value, grads = value_and_grad(evaluate_loss)(vec_params, signature, network, loss)
-  jacobian = jacfwd(evaluate_output)(vec_params, signature, network, loss)
-  direction = jnp.linalg.solve(regularization * jnp.identity(grads.size) + jnp.matmul(jnp.transpose(jacobian), jacobian), grads)
+  jacobian_laps = jacfwd(evaluate_laps)(vec_params, signature, network, loss)
+  laps_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_laps), loss.domain_mat), jacobian_laps)
+  jacobian_bdy = jacfwd(evaluate_bdy)(vec_params, signature, network, loss)
+  bdy_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_bdy), loss.bdy_mat), jacobian_bdy)
+  direction = jnp.linalg.solve(regularization * jnp.identity(grads.size) + laps_gram_matrix + bdy_gram_matrix, grads)
   if velocities is None:
     velocities = direction
   else:
@@ -126,7 +147,7 @@ def update(params, velocities, network, loss, step, regularization, mom):
   vec_params -= step * velocities
   return restore(vec_params, signature), velocities, loss_value
 
-def gauss_newton_train(params, network, loss, step = 1.0, regularization = 0.01, num_steps=500, mom = 0.0, verbose = True):
+def natural_gradient_train(params, network, loss, step = 0.01, regularization = 0.01, num_steps=500, mom = 0.0, verbose = True):
   """Train the neural network on the given loss function using the Gauss-Newton method with the given hyperparameters.
 
   Args:

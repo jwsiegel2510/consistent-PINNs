@@ -85,7 +85,7 @@ def generate_elliptic_experiment(N, Ntest, exp_type):
     u_call = lambdify((x_sym, y_sym), u)
 
   # Construct negative laplacian of solution.
-  lap_u = -1.0*sympy.diff(sympy.diff(u, x_sym), x_sym)+sympy.diff(sympy.diff(u, y_sym), y_sym)
+  lap_u = -1.0*(sympy.diff(sympy.diff(u, x_sym), x_sym)+sympy.diff(sympy.diff(u, y_sym), y_sym))
   lap_u_call = lambdify((x_sym, y_sym), lap_u)
 
   # Construct gradient of solution.
