@@ -1,6 +1,6 @@
 # Author: Jonathan Siegel
 #
-# Contains an implementation of the natural gradient descent method with momentum for training neural networks. 
+# Contains an implementation of the natural gradient Newton's method for training neural networks. 
 # The method is only suitable for training small networks due to its complexity in terms of the number of parameters.
 
 import math
@@ -117,14 +117,13 @@ def evaluate_bdy(vec_params, signature, network, loss):
   return bdy_vals.flatten()
 
 
-def update(params, velocities, network, loss, step, regularization, mom):
+def update(params, network, loss, regularization):
   """ Performs one step of Gauss-Newton iteration.
   Args:
     params: Initial network parameters
     velocitiesL velocities from the previous step
     network: Class containing the network evaluation function
     loss: class containing the loss function
-    step: stepsize
     regularization: multiple of the identity which is added to the Hessian
 
   Returns:
@@ -140,14 +139,19 @@ def update(params, velocities, network, loss, step, regularization, mom):
   jacobian_bdy = jacfwd(evaluate_bdy)(vec_params, signature, network, loss)
   bdy_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_bdy), loss.bdy_mat), jacobian_bdy)
   direction = jnp.linalg.solve(regularization * jnp.identity(grads.size) + laps_gram_matrix + bdy_gram_matrix, grads)
-  if velocities is None:
-    velocities = direction
-  else:
-    velocities = mom * velocities + (1-mom) * direction
-  vec_params -= step * velocities
-  return restore(vec_params, signature), velocities, loss_value
+  # Implement a line search to find a good step size.
+  steps = [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0]
+  leave = True
+  for step in steps:
+    vec_params_test = vec_params - step * direction
+    loss_value_test, grads = value_and_grad(evaluate_loss)(vec_params_test, signature, network, loss)
+    if loss_value_test < loss_value:
+      vec_params = vec_params_test
+      loss_value = loss_value_test
+      leave = False
+  return restore(vec_params, signature), loss_value, leave
 
-def natural_gradient_train(params, network, loss, step = 0.01, regularization = 0.01, num_steps=500, mom = 0.0, verbose = True):
+def natural_newton_train(params, network, loss, regularization = 0.01, max_num_steps=500, verbose = True):
   """Train the neural network on the given loss function using the Gauss-Newton method with the given hyperparameters.
 
   Args:
@@ -162,10 +166,11 @@ def natural_gradient_train(params, network, loss, step = 0.01, regularization = 
   Returns:
     New value of the parameters
   """
-  velocities = None
-  for epoch in range(num_steps):
-    params, velocities, loss_value = update(params, velocities, network, loss, step, regularization, mom)
+  for epoch in range(max_num_steps):
+    params, loss_value, leave = update(params, network, loss, regularization)
     if verbose:
       print('epoch: '+ str(epoch)+'   loss value: '+str(loss_value))
+    if leave:
+      return params
   return params
 
