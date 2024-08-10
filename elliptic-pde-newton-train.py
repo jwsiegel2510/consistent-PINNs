@@ -1,6 +1,7 @@
-# Authors: Jonathan Siegel and Andrea Bonito
+# Author: Jonathan Siegel
 #
-# Tests the consistent formulation of PINNs against the original L2 loss formulation on two elliptic problems.
+# Test the optimization of both the original and consistent PINNs formulation using a natural gradient Newton's method.
+# This results in significantly faster optimization with smaller networks for problems with a smooth solution.
 
 import math
 import jax.numpy as jnp
@@ -9,7 +10,7 @@ from utils import plot_values
 from experiments import generate_elliptic_experiment
 from networks import ResidualReLUkNetwork
 from loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
-from optimization import rgd_train
+from optimization import natural_newton_train
 
 ### Tested number of colloation points in each direction and along the boundary.
 Nlist = [5, 10, 15, 20, 25, 30]
@@ -18,14 +19,10 @@ Nlist = [5, 10, 15, 20, 25, 30]
 Ntest = 500
 
 ### Neural Network and training parameters
-width = 100
-depth = 8
-step_size = 0.001
-momentum = 0.9
-decrease_interval = 4000
-step_count = 40000
+width = 10
+depth = 4
 
-def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_count, decrease_interval, plot = True):
+def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
   # Initialize the network randomly.
   network = ResidualReLUkNetwork()
   params = network.init_deep_network_params(2, width, depth, random.PRNGKey(0))
@@ -37,10 +34,11 @@ def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_coun
   if loss_type == 'original':
     loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data)
   else:
-    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 1.1)
+    # Use a value of gamma = 2.0 so that the loss is quadratic. This helps improve the performance of the natural newton optimizer.
+    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 2.0)
 
   # Train the network.
-  params = rgd_train(params, network, loss, step_size, momentum, step_count, decrease_interval)
+  params = natural_newton_train(params, network, loss)
 
   # Calculate and return the relative H1 error.
   nn_sol = network.batched_predict(params, coords_test)
@@ -64,14 +62,8 @@ def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_coun
 for N in Nlist:
   print('Number of collocation points in each direction: %d' % N)
   
-  error = train_and_test(N, Ntest, 'harmonic', step_size, momentum, 'original', step_count, decrease_interval) 
+  error = train_and_test(N, Ntest, 'harmonic', 'original')
   print('Using the original loss function for the harmonic u gives a relative error of: %lf' % error)
-  
-  error = train_and_test(N, Ntest, 'harmonic', step_size, momentum, 'consistent', step_count, decrease_interval) 
+
+  error = train_and_test(N, Ntest, 'harmonic', 'consistent')
   print('Using the consistent loss function for the harmonic u gives a relative error of: %lf' % error)
-  
-  error = train_and_test(N, Ntest, 'nonsmooth', step_size, momentum, 'original', step_count, decrease_interval) 
-  print('Using the original loss function for the nonsmooth u gives a relative error of: %lf' % error)
-  
-  error = train_and_test(N, Ntest, 'nonsmooth', step_size, momentum, 'consistent', step_count, decrease_interval) 
-  print('Using the consistent loss function for the nonsmooth u gives a relative error of: %lf' % error)
