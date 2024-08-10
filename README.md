@@ -32,3 +32,16 @@ Based upon our experiments, using the consistent PINNs loss function results in 
       journal={arXiv preprint arXiv:2406.09217},
       year={2024},
     }
+
+## Natural Gradient Newton Optimizer
+
+An additional experiment where we test a Newton optimizer in function space can be found in **elliptic-pde-natural-newton.py**. This optimizer allows us to obtain the same solution accuracy much more efficiently using a much smaller network on the harmonic (i.e. smooth) example problem. However, it is not effective for the non-smooth example problem, likely due to the fact that the solution cannot be accurately captured with a small neural network in this case. The optimizer we have implemented is based upon the paper:
+
+    @inproceedings{muller2023achieving,
+      title={Achieving high accuracy with PINNs via energy natural gradient descent},
+      author={M{\"u}ller, Johannes and Zeinhofer, Marius},
+      booktitle={International Conference on Machine Learning},
+      pages={25471--25485},
+      year={2023},
+      organization={PMLR}
+    }
