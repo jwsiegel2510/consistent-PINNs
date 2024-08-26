@@ -33,6 +33,8 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
   # Create loss function.
   if loss_type == 'original':
     loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data)
+  elif loss_type == 'original-weighted':
+    loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, bdy_weight = 10.0)
   else:
     # Use a value of gamma = 1.1.
     loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 1.1)
@@ -63,7 +65,10 @@ for N in Nlist:
   print('Number of collocation points in each direction: %d' % N)
   
   error = train_and_test(N, Ntest, 'harmonic', 'original')
-  print('Using the original loss function for the harmonic u gives a relative error of: %lf' % error)
+  print('Using the original loss function gives a relative error of: %lf' % error)
 
+  error = train_and_test(N, Ntest, 'harmonic', 'original-weighted')
+  print('Using the weighted original loss function gives a relative error of: %lf' % error)
+  
   error = train_and_test(N, Ntest, 'harmonic', 'consistent')
-  print('Using the consistent loss function for the harmonic u gives a relative error of: %lf' % error)
+  print('Using the consistent loss function gives a relative error of: %lf' % error)

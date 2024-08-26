@@ -12,7 +12,7 @@ def fill_diagonal(a, val):
   return a.at[..., i, j].set(val)
 
 class OriginalPoissonPINNsLoss:
-  def __init__(self, coords, bdy_coords, rhs_data, bdy_data):
+  def __init__(self, coords, bdy_coords, rhs_data, bdy_data, bdy_weight = 1.0):
     self.coords = coords
     self.bdy_coords = bdy_coords
     self.rhs_data = rhs_data
@@ -22,7 +22,7 @@ class OriginalPoissonPINNsLoss:
     domain_size = jnp.size(self.rhs_data)
     self.d_mat = (1.0 / domain_size) * jnp.identity(domain_size)
     bdy_size = jnp.size(self.bdy_data)
-    self.b_mat = (1.0 / (2.0 * bdy_size)) * jnp.identity(bdy_size)
+    self.b_mat = (bdy_weight / (2.0 * bdy_size)) * jnp.identity(bdy_size)
 
   def apply(self, lap_vals, bdy_vals):
     diff = lap_vals + self.rhs_data.reshape(-1,)
