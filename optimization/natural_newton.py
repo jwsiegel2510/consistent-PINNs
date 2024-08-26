@@ -133,12 +133,22 @@ def update(params, network, loss, regularization):
   vec_list = vectorize(params)
   vec_params = vec_list[0]
   signature = vec_list[1]
+  # Calculate gradient of the loss function
   loss_value, grads = value_and_grad(evaluate_loss)(vec_params, signature, network, loss)
+  
+  # Determine quadratic forms on the laplacian and boundary
+  laps_vals = evaluate_laps(vec_params, signature, network, loss)
+  domain_mat = loss.domain_mat(laps_vals)
+  bdy_vals = evaluate_bdy(vec_params, signature, network, loss)
+  bdy_mat = loss.bdy_mat(bdy_vals) 
+  
+  # Use this to precondition the gradients
   jacobian_laps = jacfwd(evaluate_laps)(vec_params, signature, network, loss)
-  laps_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_laps), loss.domain_mat), jacobian_laps)
+  laps_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_laps), domain_mat), jacobian_laps)
   jacobian_bdy = jacfwd(evaluate_bdy)(vec_params, signature, network, loss)
-  bdy_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_bdy), loss.bdy_mat), jacobian_bdy)
+  bdy_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_bdy), bdy_mat), jacobian_bdy)
   direction = jnp.linalg.solve(regularization * jnp.identity(grads.size) + laps_gram_matrix + bdy_gram_matrix, grads)
+  
   # Implement a line search to find a good step size.
   steps = [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0]
   leave = True

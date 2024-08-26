@@ -34,8 +34,8 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
   if loss_type == 'original':
     loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data)
   else:
-    # Use a value of gamma = 2.0 so that the loss is quadratic. This helps improve the performance of the natural newton optimizer.
-    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 2.0)
+    # Use a value of gamma = 1.1.
+    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 1.1)
 
   # Train the network.
   params = natural_newton_train(params, network, loss)
