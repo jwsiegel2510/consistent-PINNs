@@ -64,11 +64,11 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
 for N in Nlist:
   print('Number of collocation points in each direction: %d' % N)
   
-  error = train_and_test(N, Ntest, 'harmonic', 'original')
+  error = train_and_test(N, Ntest, 'smooth', 'original')
   print('Using the original loss function gives a relative error of: %lf' % error)
 
-  error = train_and_test(N, Ntest, 'harmonic', 'original-weighted')
+  error = train_and_test(N, Ntest, 'smooth', 'original-weighted')
   print('Using the weighted original loss function gives a relative error of: %lf' % error)
   
-  error = train_and_test(N, Ntest, 'harmonic', 'consistent')
+  error = train_and_test(N, Ntest, 'smooth', 'consistent')
   print('Using the consistent loss function gives a relative error of: %lf' % error)

@@ -54,12 +54,12 @@ def generate_data(N, u, f):
   return coordinates, coordinates_bdy, rhs_data, bdy_data
 
 def generate_elliptic_experiment(N, Ntest, exp_type):
-  """Generates the point sample data and true solution for the harmonic test problem.
+  """Generates the point sample data and true solution for the harmonic and nonsmooth test problem.
 
   args:
     N: Number of collocation points in each direction for training
     Ntest: Number of points in each direction for true solution
-    exp_type: type of experiment to generate, either `harmonic' or `nonsmooth'
+    exp_type: type of experiment to generate, either `harmonic', `nonsmooth', or `smooth'
 
   returns:
     coordinates: x and y coordinates of the RHS data points
@@ -79,6 +79,9 @@ def generate_elliptic_experiment(N, Ntest, exp_type):
   if exp_type == 'harmonic':  
     u = sympy.exp(x_sym)*sympy.cos(sympy.pi*y_sym)
     u_call = lambdify((x_sym, y_sym), u)
+  elif exp_type == 'smooth':
+    u = sympy.exp(x_sym + y_sym)*sympy.cos(2.0*sympy.pi*(y_sym - x_sym))/sympy.sqrt(1.0 + x_sym**2 + y_sym**2)
+    u_call = lambdify((x_sym, y_sym), u) 
   else:
     u_tmp = 1000*x_sym*(1-x_sym)*y_sym*(1-y_sym)*r_sym**(4.5)
     u = u_tmp.subs({r_sym:sympy.sqrt((x_sym-0.5)**2+(y_sym-0.5)**2)}).simplify()
