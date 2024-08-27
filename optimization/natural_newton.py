@@ -97,6 +97,25 @@ def evaluate_laps(vec_params, signature, network, loss):
   lap_vals = network.batched_laplacians_predict(params, coords)
   return lap_vals.flatten()
 
+def evaluate_grads(vec_params, signature, network, loss):
+  """Evaluates the network gradients on the set of training points.
+
+  Args:
+    vec_params: vector of params
+    signature: nested list of tuples giving how to unpack the parameters
+    network: neural network class
+    loss: loss function class
+
+  Returns:
+    Values of the network laplacian.
+  """
+  params = restore(vec_params, signature)
+
+  # Extract sample point coordinates from loss and evaluate network at sample points
+  coords = loss.coords
+  grad_vals = network.batched_grad_predict(params, coords)
+  return grad_vals.flatten()
+
 def evaluate_bdy(vec_params, signature, network, loss):
   """Evaluates the network and its laplacian output on the set of training points.
 
@@ -134,14 +153,14 @@ def update(params, network, loss, regularization):
   vec_params = vec_list[0]
   signature = vec_list[1]
   # Calculate gradient of the loss function
-  loss_value, grads = value_and_grad(evaluate_loss)(vec_params, signature, network, loss)
-  
+  grads = grad(evaluate_loss)(vec_params, signature, network, loss)
+    
   # Determine quadratic forms on the laplacian and boundary
   laps_vals = evaluate_laps(vec_params, signature, network, loss)
   domain_mat = loss.domain_mat(laps_vals)
   bdy_vals = evaluate_bdy(vec_params, signature, network, loss)
   bdy_mat = loss.bdy_mat(bdy_vals) 
-  
+    
   # Use this to precondition the gradients
   jacobian_laps = jacfwd(evaluate_laps)(vec_params, signature, network, loss)
   laps_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_laps), domain_mat), jacobian_laps)
@@ -150,16 +169,18 @@ def update(params, network, loss, regularization):
   direction = jnp.linalg.solve(regularization * jnp.identity(grads.size) + laps_gram_matrix + bdy_gram_matrix, grads)
   
   # Implement a line search to find a good step size.
-  steps = [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0]
-  leave = True
+  loss_value = 0.0
+  steps = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
   for step in steps:
     vec_params_test = vec_params - step * direction
-    loss_value_test, grads = value_and_grad(evaluate_loss)(vec_params_test, signature, network, loss)
-    if loss_value_test < loss_value:
+    if loss.use_grads:
+      loss_value_test = evaluate_loss_grad(vec_params_test, signature, network, loss) 
+    else:
+      loss_value_test = evaluate_loss(vec_params_test, signature, network, loss)
+    if step == steps[0] or loss_value_test < loss_value:
       vec_params = vec_params_test
       loss_value = loss_value_test
-      leave = False
-  return restore(vec_params, signature), loss_value, leave
+  return restore(vec_params, signature), loss_value
 
 def natural_newton_train(params, network, loss, regularization = 0.01, max_num_steps=500, verbose = True):
   """Train the neural network on the given loss function using the Gauss-Newton method with the given hyperparameters.
@@ -177,10 +198,8 @@ def natural_newton_train(params, network, loss, regularization = 0.01, max_num_s
     New value of the parameters
   """
   for epoch in range(max_num_steps):
-    params, loss_value, leave = update(params, network, loss, regularization)
+    params, loss_value = update(params, network, loss, regularization)
     if verbose:
       print('epoch: '+ str(epoch)+'   loss value: '+str(loss_value))
-    if leave:
-      return params
   return params
 

@@ -1,6 +1,6 @@
 # Author: Jonathan Siegel and Andrea Bonito
 #
-# Contains classes which implement both the original L2 loss function and the consistent loss function for the Poisson equation.
+# Contains classes which implement both the original L2 loss function, the consistent loss function, and the deep Ritz loss with consistent boundary terms for the 2d Poisson equation.
 
 import math
 import jax.numpy as jnp
@@ -17,6 +17,7 @@ class OriginalPoissonPINNsLoss:
     self.bdy_coords = bdy_coords
     self.rhs_data = rhs_data
     self.bdy_data = bdy_data
+    self.use_grads = False
 
     # Construct loss matrices
     domain_size = jnp.size(self.rhs_data)
@@ -46,6 +47,7 @@ class ConsistentPoissonPINNsLoss:
     self.rhs_data = rhs_data
     self.bdy_data = bdy_data
     self.gamma = gamma
+    self.use_grads = False
 
     # Construct loss matrices
     domain_size = jnp.size(self.rhs_data)

@@ -19,8 +19,8 @@ Nlist = [30] # [5, 10, 15, 20, 25, 30]
 Ntest = 500
 
 ### Neural Network and training parameters
-width = 10
-depth = 4
+width = 5
+depth = 5
 
 def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
   # Initialize the network randomly.
@@ -35,6 +35,8 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
     loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data)
   elif loss_type == 'original-weighted':
     loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, bdy_weight = 10.0)
+  elif loss_type == 'consistent-l2':
+    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 2.0)
   else:
     # Use a value of gamma = 1.1.
     loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 1.1)
@@ -65,10 +67,13 @@ for N in Nlist:
   print('Number of collocation points in each direction: %d' % N)
   
   error = train_and_test(N, Ntest, 'smooth', 'original')
-  print('Using the original loss function gives a relative error of: %lf' % error)
+  print('Using the original loss gives a relative error of: %lf' % error)
 
   error = train_and_test(N, Ntest, 'smooth', 'original-weighted')
-  print('Using the weighted original loss function gives a relative error of: %lf' % error)
+  print('Using the weighted original loss gives a relative error of: %lf' % error)
   
   error = train_and_test(N, Ntest, 'smooth', 'consistent')
-  print('Using the consistent loss function gives a relative error of: %lf' % error)
+  print('Using the consistent loss gives a relative error of: %lf' % error)
+  
+  error = train_and_test(N, Ntest, 'smooth', 'consistent-l2')
+  print('Using the consistent loss with L2 gives a relative error of: %lf' % error)
