@@ -13,7 +13,7 @@ from loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
 from optimization import natural_newton_train
 
 ### Tested number of colloation points in each direction and along the boundary.
-Nlist = [5, 10, 15, 20, 25, 30]
+Nlist = [30] # [5, 10, 15, 20, 25, 30]
 
 ### Number of points in each direction for plotting and for calculating the error.
 Ntest = 500

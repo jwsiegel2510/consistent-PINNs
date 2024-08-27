@@ -161,7 +161,7 @@ def update(params, network, loss, regularization):
       leave = False
   return restore(vec_params, signature), loss_value, leave
 
-def natural_newton_train(params, network, loss, regularization = 0.01, max_num_steps=150, verbose = True):
+def natural_newton_train(params, network, loss, regularization = 0.01, max_num_steps=500, verbose = True):
   """Train the neural network on the given loss function using the Gauss-Newton method with the given hyperparameters.
 
   Args:
