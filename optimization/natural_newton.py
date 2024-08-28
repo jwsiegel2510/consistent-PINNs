@@ -182,7 +182,7 @@ def update(params, network, loss, regularization):
       loss_value = loss_value_test
   return restore(vec_params, signature), loss_value
 
-def natural_newton_train(params, network, loss, regularization = 0.01, max_num_steps=500, verbose = True):
+def natural_newton_train(params, network, loss, regularization = 0.01, num_steps=250, verbose = True):
   """Train the neural network on the given loss function using the Gauss-Newton method with the given hyperparameters.
 
   Args:
@@ -197,7 +197,7 @@ def natural_newton_train(params, network, loss, regularization = 0.01, max_num_s
   Returns:
     New value of the parameters
   """
-  for epoch in range(max_num_steps):
+  for epoch in range(num_steps):
     params, loss_value = update(params, network, loss, regularization)
     if verbose:
       print('epoch: '+ str(epoch)+'   loss value: '+str(loss_value))

@@ -3,6 +3,7 @@
 # Test the optimization of both the original and consistent PINNs formulation using a natural gradient Newton's method.
 # This results in significantly faster optimization with smaller networks for problems with a smooth solution.
 
+import sys
 import math
 import jax.numpy as jnp
 from jax import random
@@ -13,7 +14,7 @@ from loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
 from optimization import natural_newton_train
 
 ### Tested number of colloation points in each direction and along the boundary.
-Nlist = [30] # [5, 10, 15, 20, 25, 30]
+Nlist = [10, 20, 30, 40]
 
 ### Number of points in each direction for plotting and for calculating the error.
 Ntest = 500
@@ -21,6 +22,7 @@ Ntest = 500
 ### Neural Network and training parameters
 width = 5
 depth = 5
+num_steps = 250
 
 def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
   # Initialize the network randomly.
@@ -42,7 +44,7 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
     loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 1.1)
 
   # Train the network.
-  params = natural_newton_train(params, network, loss)
+  params = natural_newton_train(params, network, loss, num_steps=num_steps)
 
   # Calculate and return the relative H1 error.
   nn_sol = network.batched_predict(params, coords_test)
@@ -63,17 +65,27 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
   return error / solution_norm
 
 ### Run the experiments.
+if len(sys.argv) > 1:
+  experiment = sys.argv[1]
+else:
+  experiment = 'harmonic'
+if experiment == 'smooth':
+  width = 10
+  num_steps = 500
+if experiment == 'non-smooth':
+  width = 10
+  num_steps = 1000
 for N in Nlist:
   print('Number of collocation points in each direction: %d' % N)
   
-  error = train_and_test(N, Ntest, 'smooth', 'original')
+  error = train_and_test(N, Ntest, experiment, 'original')
   print('Using the original loss gives a relative error of: %lf' % error)
 
-  error = train_and_test(N, Ntest, 'smooth', 'original-weighted')
+  error = train_and_test(N, Ntest, experiment, 'original-weighted')
   print('Using the weighted original loss gives a relative error of: %lf' % error)
   
-  error = train_and_test(N, Ntest, 'smooth', 'consistent')
+  error = train_and_test(N, Ntest, experiment, 'consistent')
   print('Using the consistent loss gives a relative error of: %lf' % error)
   
-  error = train_and_test(N, Ntest, 'smooth', 'consistent-l2')
+  error = train_and_test(N, Ntest, experiment, 'consistent-l2')
   print('Using the consistent loss with L2 gives a relative error of: %lf' % error)
