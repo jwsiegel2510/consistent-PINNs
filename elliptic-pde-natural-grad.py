@@ -14,17 +14,17 @@ from loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
 from optimization import natural_newton_train
 
 ### Tested number of colloation points in each direction and along the boundary.
-Nlist = [10, 20, 30, 40]
+Nlist = [5, 10, 15, 20]
 
 ### Number of points in each direction for plotting and for calculating the error.
 Ntest = 500
 
 ### Neural Network and training parameters
 width = 5
-depth = 5
-num_steps = 250
+depth = 3
+num_steps = 500
 
-def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
+def train_and_test(N, Ntest, exp_type, loss_type, plot = False):
   # Initialize the network randomly.
   network = ResidualReLUkNetwork()
   params = network.init_deep_network_params(2, width, depth, random.PRNGKey(0))
@@ -44,7 +44,7 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = True):
     loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 1.1)
 
   # Train the network.
-  params = natural_newton_train(params, network, loss, num_steps=num_steps)
+  params = natural_newton_train(params, network, loss, num_steps=num_steps, verbose=False)
 
   # Calculate and return the relative H1 error.
   nn_sol = network.batched_predict(params, coords_test)
@@ -73,8 +73,9 @@ if experiment == 'smooth':
   width = 10
   num_steps = 500
 if experiment == 'non-smooth':
-  width = 10
+  Nlist = [10, 20, 30, 40]
   num_steps = 1000
+  width = 15
 for N in Nlist:
   print('Number of collocation points in each direction: %d' % N)
   

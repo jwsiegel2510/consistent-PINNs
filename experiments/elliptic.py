@@ -80,7 +80,7 @@ def generate_elliptic_experiment(N, Ntest, exp_type):
     u = sympy.exp(x_sym)*sympy.cos(sympy.pi*y_sym)
     u_call = lambdify((x_sym, y_sym), u)
   elif exp_type == 'smooth':
-    u = sympy.exp(1.0*(x_sym + y_sym))*sympy.cos(3.0*sympy.pi*(y_sym - x_sym))/(1.0 + 8.0*x_sym**2 + y_sym**2)
+    u = sympy.exp(2.0*(x_sym + y_sym))*sympy.cos(2.0*sympy.pi*(y_sym - x_sym))/(1.0 + 8.0*x_sym**2 + y_sym**2)
     u_call = lambdify((x_sym, y_sym), u) 
   else:
     u_tmp = 1000*x_sym*(1-x_sym)*y_sym*(1-y_sym)*r_sym**(4.5)

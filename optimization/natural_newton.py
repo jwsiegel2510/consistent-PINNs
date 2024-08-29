@@ -201,5 +201,6 @@ def natural_newton_train(params, network, loss, regularization = 0.01, num_steps
     params, loss_value = update(params, network, loss, regularization)
     if verbose:
       print('epoch: '+ str(epoch)+'   loss value: '+str(loss_value))
+  print('total epoch: '+ str(num_steps)+'   final loss value: '+str(loss_value))
   return params
 
