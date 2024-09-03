@@ -36,7 +36,7 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = False):
   if loss_type == 'original':
     loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data)
   elif loss_type == 'original-weighted':
-    loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, bdy_weight = 10.0)
+    loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, bdy_weight = N)
   elif loss_type == 'consistent-l2':
     loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 2.0)
   else:
