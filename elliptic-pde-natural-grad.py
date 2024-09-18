@@ -7,11 +7,11 @@ import sys
 import math
 import jax.numpy as jnp
 from jax import random
-from utils import plot_values
-from experiments import generate_elliptic_experiment
-from networks import ResidualReLUkNetwork
-from loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
-from optimization import natural_newton_train
+from implementation.utils import plot_values
+from implementation.experiments import generate_elliptic_experiment
+from implementation.networks import ResidualReLUkNetwork
+from implementation.loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
+from implementation.optimization import natural_newton_train
 
 ### Tested number of colloation points in each direction and along the boundary.
 Nlist = [5, 10, 15, 20]
