@@ -18,8 +18,8 @@ def relu3(x):
 class ResidualReLUkNetwork:
   def __init__(self):
     # Enable evaluation at multiple points simultaneously
-    self.batched_predict = vmap(self.predict, in_axes=(None, 0))
-
+    self.batched_predict = vmap(self.scalar_predict, in_axes=(None, 0))
+    
     # Enable evaluation of gradient at multiple points.
     self.batched_grad_predict = vmap(self.grad_predict, in_axes=(None, 0))
 

@@ -40,7 +40,7 @@ def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_coun
     loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 1.1)
 
   # Train the network.
-  params = rgd_train(params, network, loss, step_size, momentum, step_count, decrease_interval)
+  params = rgd_train(params, network, loss, step_size, momentum, step_count, decrease_interval, verbose=False)
 
   # Calculate and return the relative H1 error.
   nn_sol = network.batched_predict(params, coords_test)

@@ -7,27 +7,6 @@ import jax.numpy as jnp
 from jax import grad, value_and_grad, jit
 from functools import partial
 
-@partial(jit, static_argnums=[1,2])
-def evaluate_loss(params, network, loss):
-  """Evaluates the loss. We take the gradient of this function.
-
-  Args:
-    params: Initial network parameters
-    network: Class containing the network evaluation function
-    loss: class containing the loss function
-
-  Returns:
-    Loss value
-  """
-  # Extract sample point coordinates from loss and evaluate network at sample points
-  coords = loss.coords
-  bdy_coords = loss.bdy_coords
-  lap_vals = network.batched_laplacians_predict(params, coords)
-  bdy_vals = network.batched_predict(params, bdy_coords)
-  
-  # Evaluate loss
-  return loss.apply(lap_vals, bdy_vals)
-
 @partial(jit, static_argnums=[2,3])
 def update(params, velocities, network, loss, step, mom):
   """Performs one update step.
@@ -44,7 +23,8 @@ def update(params, velocities, network, loss, step, mom):
     loss_value: current value of the loss function
     velocities: updated velocities
   """
-  loss_value, grads = value_and_grad(evaluate_loss)(params, network, loss)
+  loss_value = loss.evaluate(params, network)
+  grads = loss.gradient(params, network)
   if velocities == None:
     velocities = grads
   else:

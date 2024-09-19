@@ -5,90 +5,9 @@
 
 import math
 import jax.numpy as jnp
-from jax import grad, value_and_grad, jit, jacfwd
+from jax import jit
 from functools import partial
 from ..utils import vectorize, restore
-
-def evaluate_loss(vec_params, signature, network, loss):
-  """Evaluates the loss function on a vectorized set of parameters.
-
-  Args:
-    vec_params: vector of params
-    signature: nested list of tuples giving how to unpack the parameters
-    network: neural network class
-    loss: loss function class
-
-  Returns:
-    Value of the loss function
-  """
-  params = restore(vec_params, signature)
-  
-  # Extract sample point coordinates from loss and evaluate network at sample points
-  coords = loss.coords
-  bdy_coords = loss.bdy_coords
-  lap_vals = network.batched_laplacians_predict(params, coords)
-  bdy_vals = network.batched_predict(params, bdy_coords)
- 
-  # Evaluate loss
-  return loss.apply(lap_vals, bdy_vals)
-
-def evaluate_laps(vec_params, signature, network, loss):
-  """Evaluates the network and its laplacian output on the set of training points.
-
-  Args:
-    vec_params: vector of params
-    signature: nested list of tuples giving how to unpack the parameters
-    network: neural network class
-    loss: loss function class
-
-  Returns:
-    Values of the network laplacian.
-  """
-  params = restore(vec_params, signature)
-  
-  # Extract sample point coordinates from loss and evaluate network at sample points
-  coords = loss.coords
-  lap_vals = network.batched_laplacians_predict(params, coords)
-  return lap_vals.flatten()
-
-def evaluate_grads(vec_params, signature, network, loss):
-  """Evaluates the network gradients on the set of training points.
-
-  Args:
-    vec_params: vector of params
-    signature: nested list of tuples giving how to unpack the parameters
-    network: neural network class
-    loss: loss function class
-
-  Returns:
-    Values of the network laplacian.
-  """
-  params = restore(vec_params, signature)
-
-  # Extract sample point coordinates from loss and evaluate network at sample points
-  coords = loss.coords
-  grad_vals = network.batched_grad_predict(params, coords)
-  return grad_vals.flatten()
-
-def evaluate_bdy(vec_params, signature, network, loss):
-  """Evaluates the network and its laplacian output on the set of training points.
-
-  Args:
-    vec_params: vector of params
-    signature: nested list of tuples giving how to unpack the parameters
-    network: neural network class
-    loss: loss function class
-
-  Returns:
-    boundary_values of the network
-  """
-  params = restore(vec_params, signature)
-  
-  # Extract sample point coordinates from loss and evaluate network at sample points
-  bdy_coords = loss.bdy_coords
-  bdy_vals = network.batched_predict(params, bdy_coords)
-  return bdy_vals.flatten()
-
 
 def update(params, network, loss, regularization):
   """ Performs one step of Gauss-Newton iteration.
@@ -103,34 +22,27 @@ def update(params, network, loss, regularization):
     params: new parameter values
     loss_value: current value of the loss function
   """
-  vec_list = vectorize(params)
-  vec_params = vec_list[0]
-  signature = vec_list[1]
   # Calculate gradient of the loss function
-  grads = grad(evaluate_loss)(vec_params, signature, network, loss)
-    
-  # Determine quadratic forms on the laplacian and boundary
-  laps_vals = evaluate_laps(vec_params, signature, network, loss)
-  domain_mat = loss.domain_mat(laps_vals)
-  bdy_vals = evaluate_bdy(vec_params, signature, network, loss)
-  bdy_mat = loss.bdy_mat(bdy_vals) 
-    
-  # Use this to precondition the gradients
-  jacobian_laps = jacfwd(evaluate_laps)(vec_params, signature, network, loss)
-  laps_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_laps), domain_mat), jacobian_laps)
-  jacobian_bdy = jacfwd(evaluate_bdy)(vec_params, signature, network, loss)
-  bdy_gram_matrix = jnp.matmul(jnp.matmul(jnp.transpose(jacobian_bdy), bdy_mat), jacobian_bdy)
-  direction = jnp.linalg.solve(regularization * jnp.identity(grads.size) + laps_gram_matrix + bdy_gram_matrix, grads)
+  grads = loss.gradient(params, network)
+
+  # Vectorize both the gradients and parameters
+  vec_list = vectorize(grads)
+  vec_grads = vec_list[0]
+  signature = vec_list[1]
+  vec_params = vectorize(params)[0]
   
+  # Obtain the natural gradient quadratic form from the loss function
+  natural_grad_form = loss.natural_gradient_form(params, network)
+
+  # Determine search direction by solving the linear system
+  direction = jnp.linalg.solve(regularization * jnp.identity(vec_grads.size) + natural_grad_form, vec_grads)
+
   # Implement a line search to find a good step size.
   loss_value = 0.0
   steps = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
   for step in steps:
     vec_params_test = vec_params - step * direction
-    if loss.use_grads:
-      loss_value_test = evaluate_loss_grad(vec_params_test, signature, network, loss) 
-    else:
-      loss_value_test = evaluate_loss(vec_params_test, signature, network, loss)
+    loss_value_test = loss.evaluate(restore(vec_params_test, signature), network)
     if step == steps[0] or loss_value_test < loss_value:
       vec_params = vec_params_test
       loss_value = loss_value_test
