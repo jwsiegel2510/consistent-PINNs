@@ -3,6 +3,7 @@
 # Contains methods for vectorizing parameter arrays. This is useful for implementing second order methods.
 
 import jax.numpy as jnp
+from jax import jit
 
 def vectorize(params):
   """Recursive function for vectorizing parameters.

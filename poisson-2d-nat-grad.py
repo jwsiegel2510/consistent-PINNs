@@ -1,14 +1,14 @@
 # Author: Jonathan Siegel
 #
 # Test the optimization of both the original and consistent PINNs formulation using a natural gradient Newton's method.
-# This results in significantly faster optimization with smaller networks for problems with a smooth solution.
+# This results in significantly faster optimization with smaller networks.
 
 import sys
 import math
 import jax.numpy as jnp
 from jax import random
 from implementation.utils import plot_values
-from implementation.experiments import generate_elliptic_experiment
+from implementation.experiments import generate_2d_poisson_experiment
 from implementation.networks import ResidualReLUkNetwork
 from implementation.loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
 from implementation.optimization import natural_newton_train
@@ -30,7 +30,7 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = False):
   params = network.init_deep_network_params(2, width, depth, random.PRNGKey(0))
 
   # Generate the data.
-  coords, bdy_coords, coords_test, rhs_data, bdy_data, sol, sol_grads = generate_elliptic_experiment(N, Ntest, exp_type)
+  coords, bdy_coords, coords_test, rhs_data, bdy_data, sol, sol_grads = generate_2d_poisson_experiment(N, Ntest, exp_type)
 
   # Create loss function.
   if loss_type == 'original':
@@ -48,19 +48,15 @@ def train_and_test(N, Ntest, exp_type, loss_type, plot = False):
 
   # Calculate and return the relative H1 error.
   nn_sol = network.batched_predict(params, coords_test)
-  xp_test=jnp.linspace(0.,1.,Ntest)
-  yp_test=jnp.linspace(0.,1.,Ntest)
-
-  X_test, Y_test = jnp.meshgrid(xp_test, yp_test)
   if plot:
-    plot_values(X_test,Y_test,jnp.reshape(nn_sol,jnp.shape(X_test)))
-    plot_values(X_test,Y_test,sol)
+    plot_values(coords_test[:,0], coords_test[:,1], nn_sol)
+    plot_values(coords_test[:,0], coords_test[:,1], sol)
 
   # Calculate the H1 error.
   nn_grads = network.batched_grad_predict(params, coords_test)
 
   solution_norm = (1.0/Ntest)*jnp.linalg.norm(sol_grads, 'fro') + (1.0/Ntest)*jnp.linalg.norm(sol)
-  error = (1.0/Ntest)*jnp.linalg.norm(sol_grads - nn_grads, 'fro') + (1.0/Ntest)*jnp.linalg.norm(jnp.reshape(nn_sol, jnp.shape(X_test)) - sol)
+  error = (1.0/Ntest)*jnp.linalg.norm(sol_grads - nn_grads, 'fro') + (1.0/Ntest)*jnp.linalg.norm(nn_sol - sol)
 
   return error / solution_norm
 

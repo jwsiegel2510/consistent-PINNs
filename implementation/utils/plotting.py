@@ -16,6 +16,6 @@ def plot_values(Xval, Yval, solution):
     solution: An array of solution values
   """
   fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-  surf = ax.plot_surface(Xval, Yval, solution, cmap=cm.coolwarm,
+  surf = ax.plot_trisurf(Xval, Yval, solution, cmap=cm.coolwarm,
                        linewidth=0, antialiased=False)
   plt.show()

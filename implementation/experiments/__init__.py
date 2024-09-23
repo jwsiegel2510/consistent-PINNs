@@ -1,1 +1,1 @@
-from .elliptic import generate_elliptic_experiment
+from .poisson import generate_2d_poisson_experiment

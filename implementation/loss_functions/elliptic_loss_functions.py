@@ -27,14 +27,14 @@ class OriginalPoissonPINNsLoss:
     bdy_size = jnp.size(self.bdy_data)
     self.b_mat = (bdy_weight / (2.0 * bdy_size)) * jnp.identity(bdy_size)
 
-  @partial(jit, static_argnums=[0,2])
+  #@partial(jit, static_argnums=[0,2])
   def evaluate(self, params, network):
     lap_vals = network.batched_laplacians_predict(params, self.coords)
-    diff = lap_vals + self.rhs_data.reshape(-1,)
+    diff = lap_vals + self.rhs_data
     domain_term = jnp.matmul(jnp.matmul(diff.transpose(), self.d_mat), diff)
 
     bdy_vals = network.batched_predict(params, self.bdy_coords)
-    diff = bdy_vals.reshape(-1,) - self.bdy_data.reshape(-1,)
+    diff = bdy_vals - self.bdy_data
     bdy_term = jnp.matmul(jnp.matmul(diff.transpose(), self.b_mat), diff)
 
     return domain_term + bdy_term
@@ -89,11 +89,11 @@ class ConsistentPoissonPINNsLoss:
   @partial(jit, static_argnums=[0,2])
   def evaluate(self, params, network):
     lap_vals = network.batched_laplacians_predict(params, self.coords)
-    diff = jnp.power(jnp.abs(lap_vals + self.rhs_data.reshape(-1,)) + 1e-8, self.gamma / 2.0)
+    diff = jnp.power(jnp.abs(lap_vals + self.rhs_data) + 1e-8, self.gamma / 2.0)
     domain_term = jnp.power(jnp.matmul(jnp.matmul(diff.transpose(), self.d_mat), diff), 2.0 / self.gamma)
 
     bdy_vals = network.batched_predict(params, self.bdy_coords)
-    diff = bdy_vals.reshape(-1,) - self.bdy_data.reshape(-1,)
+    diff = bdy_vals - self.bdy_data
     bdy_term = jnp.matmul(jnp.matmul(diff.transpose(), self.b_mat), diff)
 
     return domain_term + bdy_term
@@ -124,7 +124,7 @@ class ConsistentPoissonPINNsLoss:
   # The domain matrix must change depending upon the input if gamma != 2.
   @partial(jit, static_argnums=[0])
   def domain_mat(self, lap_vals):
-    diff = jnp.power(jnp.abs(lap_vals + self.rhs_data.reshape(-1,)) + 1e-8, self.gamma / 2.0)
+    diff = jnp.power(jnp.abs(lap_vals + self.rhs_data) + 1e-8, self.gamma / 2.0)
     domain_term = jnp.power(jnp.matmul(jnp.matmul(diff.transpose(), self.d_mat), diff), 2.0 / self.gamma)
     return jnp.power(domain_term, ((2.0 - self.gamma) / 2.0)) * (jnp.multiply(self.d_mat, jnp.power(diff, 2.0 * (self.gamma - 2.0) / self.gamma)))
 
