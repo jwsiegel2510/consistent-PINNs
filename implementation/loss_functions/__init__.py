@@ -1,1 +1,1 @@
-from .elliptic_loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
+from .poisson_loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss

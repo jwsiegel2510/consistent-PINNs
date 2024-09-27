@@ -129,7 +129,7 @@ def generate_3d_poisson_experiment(N, Ntest, exp_type):
   z_sym = sympy.Symbol('z')
 
   # Currently the only experiment is smooth.
-  u = sympy.exp(2.0*(x_sym + y_sym) + z_sym)*sympy.cos(2.0*sympy.pi*(y_sym - x_sym))*sympy.sin(3.0*sympy.pi*(x_sym + z_sym))/(1.0 + 8.0*x_sym**2 + y_sym**2 + 16.0*z_sym**4)
+  u = sympy.exp(x_sym + y_sym + z_sym)*sympy.cos(3.0*sympy.pi*(y_sym - x_sym + z_sym))/(1.0 + x_sym**2 + y_sym**2 + z_sym**4)
   u_call = lambdify((x_sym, y_sym, z_sym), u)
 
   # Construct negative laplacian of solution.
@@ -145,14 +145,14 @@ def generate_3d_poisson_experiment(N, Ntest, exp_type):
   grad_u_z_call = lambdify((x_sym, y_sym, z_sym), grad_u_z)
   
   # Generate training data.
-  coordinates, coordinates_bdy = generate_coordinates_cube(N, 0., 1., 2)
+  coordinates, coordinates_bdy = generate_coordinates_cube(N, 0., 1., 3)
 
   # data values
   rhs_data = lap_u_call(coordinates[:,0], coordinates[:,1], coordinates[:,2])
   bdy_data = u_call(coordinates_bdy[:,0], coordinates_bdy[:,1], coordinates_bdy[:,2])
 
   # Generate solution data.
-  coordinates_test = generate_coordinate_grid(Ntest, 0., 1., 2)
+  coordinates_test = generate_coordinate_grid(Ntest, 0., 1., 3)
   X_test = coordinates_test[:,0]
   Y_test = coordinates_test[:,1]
   Z_test = coordinates_test[:,2]

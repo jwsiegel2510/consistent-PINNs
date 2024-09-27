@@ -1,1 +1,1 @@
-from .poisson import generate_2d_poisson_experiment
+from .poisson import generate_2d_poisson_experiment, generate_3d_poisson_experiment
