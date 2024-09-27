@@ -1,0 +1,76 @@
+# Author: Jonathan Siegel
+#
+# Tests the consistent PINNs on a 3d elliptic problem using gradient descent to train.
+
+import math
+import jax.numpy as jnp
+from jax import random
+from implementation.utils import plot_values
+from implementation.experiments import generate_3d_poisson_experiment
+from implementation.networks import ResidualReLUkNetwork
+from implementation.loss_functions import OriginalPoissonPINNsLoss, ConsistentPoissonPINNsLoss
+from implementation.optimization import rgd_train
+
+### Tested number of colloation points in each direction and along the boundary.
+Nlist = [10, 20, 30]
+
+### Number of points in each direction for plotting and for calculating the error.
+Ntest = 100
+
+### Neural Network and training parameters
+width = 100
+depth = 8
+step_size = 0.001
+momentum = 0.9
+decrease_interval = 4000
+step_count = 40000
+
+def train_and_test(N, Ntest, exp_type, step_size, momentum, loss_type, step_count, decrease_interval):
+  # Initialize the network randomly.
+  network = ResidualReLUkNetwork()
+  params = network.init_deep_network_params(3, width, depth, random.PRNGKey(0))
+
+  # Generate the data.
+  coords, bdy_coords, coords_test, rhs_data, bdy_data, sol, sol_grads = generate_3d_poisson_experiment(N, Ntest, exp_type)
+
+  # Create loss function.
+  if loss_type == 'original':
+    loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data)
+  elif loss_type == 'original-weighted':
+    loss = OriginalPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, bdy_weight = N)
+  elif loss_type == 'consistent-l2':
+    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 2.0)
+  else:
+    # Use a value of gamma = 6/5 in 2d.
+    loss = ConsistentPoissonPINNsLoss(coords, bdy_coords, rhs_data, bdy_data, 6.0/5.0)
+
+  # Train the network.
+  params = rgd_train(params, network, loss, step_size, momentum, step_count, decrease_interval, verbose=True)
+
+  # Calculate and return the relative H1 error.
+  nn_sol = network.batched_predict(params, coords_test)
+
+  # Calculate the H1 error.
+  nn_grads = network.batched_grad_predict(params, coords_test)
+
+  solution_norm = (1.0/Ntest)*jnp.linalg.norm(sol_grads, 'fro') + (1.0/Ntest)*jnp.linalg.norm(sol)
+  error = (1.0/Ntest)*jnp.linalg.norm(sol_grads - nn_grads, 'fro') + (1.0/Ntest)*jnp.linalg.norm(nn_sol - sol)
+
+  return error / solution_norm
+
+### Run the experiments.
+experiment = 'smooth'
+for N in Nlist:
+  print('Number of collocation points in each direction: %d' % N)
+
+  error = train_and_test(N, Ntest, experiment, step_size, momentum, 'original', step_count, decrease_interval)
+  print('Using the original loss gives a relative error of: %lf' % error)
+
+  error = train_and_test(N, Ntest, experiment, step_size, momentum, 'original-weighted', step_count, decrease_interval)
+  print('Using the weighted original loss gives a relative error of: %lf' % error)
+
+  error = train_and_test(N, Ntest, experiment, step_size, momentum, 'consistent', step_count, decrease_interval)
+  print('Using the consistent loss gives a relative error of: %lf' % error)
+
+  error = train_and_test(N, Ntest, experiment, step_size, momentum, 'consistent-l2', step_count, decrease_interval)
+  print('Using the consistent loss with L2 gives a relative error of: %lf' % error)
