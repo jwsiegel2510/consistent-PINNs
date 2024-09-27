@@ -73,18 +73,13 @@ class ConsistentPoissonPINNsLoss:
     domain_size = jnp.size(self.rhs_data)
     self.d_mat = (1.0 / domain_size) * jnp.identity(domain_size)
 
+    d = bdy_coords.shape[1]
     bdy_size = jnp.size(self.bdy_data)
-    cx = self.bdy_coords[:,0].reshape((jnp.shape(self.bdy_coords)[0],1))
-    cy = self.bdy_coords[:,1].reshape((jnp.shape(self.bdy_coords)[0],1))
-
-    # difference matrices
-    Mcx = cx.T - cx
-    Mcy = cy.T - cy
-    norm_diff_sqr = jnp.multiply(Mcx,Mcx) + jnp.multiply(Mcy,Mcy)
-    norm_diff_sqr = 1.0 / norm_diff_sqr
-    norm_diff_sqr = fill_diagonal(norm_diff_sqr, 0)
-    new_diag = jnp.sum(norm_diff_sqr, 1)
-    self.b_mat = 0.5 * (1.0 / (bdy_size * bdy_size)) * fill_diagonal(-1.0 * norm_diff_sqr, new_diag) + (1.0 / (2.0 * bdy_size)) * jnp.identity(bdy_size)
+    diff_tensor = jnp.expand_dims(bdy_coords, axis=0) - jnp.expand_dims(bdy_coords, axis=1)
+    norm_diff = jnp.linalg.norm(diff_tensor, axis=2)
+    off_diag_mat = fill_diagonal(jnp.power(norm_diff, -d), 0)
+    new_diag = jnp.sum(off_diag_mat, 1)
+    self.b_mat = 0.5 * (1.0 / (bdy_size * bdy_size)) * fill_diagonal(-1.0 * off_diag_mat, new_diag) + (1.0 / (2.0 * bdy_size)) * jnp.identity(bdy_size)
 
   @partial(jit, static_argnums=[0,2])
   def evaluate(self, params, network):

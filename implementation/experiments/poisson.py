@@ -102,7 +102,7 @@ def generate_2d_poisson_experiment(N, Ntest, exp_type):
   solution = u_call(X_test, Y_test)
   solution_grad_x = grad_u_x_call(X_test,Y_test)
   solution_grad_y = grad_u_y_call(X_test,Y_test)
-  solution_grads = jnp.concatenate((jnp.reshape(solution_grad_x, (-1,1)), jnp.reshape(solution_grad_y, (-1,1))), axis = 1)
+  solution_grads = jnp.column_stack((solution_grad_x, solution_grad_y))
 
   return coordinates, coordinates_bdy, coordinates_test, rhs_data, bdy_data, solution, solution_grads
 
@@ -139,17 +139,28 @@ def generate_3d_poisson_experiment(N, Ntest, exp_type):
   # Construct gradient of solution.
   grad_u_x = sympy.diff(u, x_sym)
   grad_u_y = sympy.diff(u, y_sym)
-  grad_u_y = sympy.diff(u, z_sym)
+  grad_u_z = sympy.diff(u, z_sym)
   grad_u_x_call = lambdify((x_sym, y_sym, z_sym), grad_u_x)
   grad_u_y_call = lambdify((x_sym, y_sym, z_sym), grad_u_y)
-  grad_u_y_call = lambdify((x_sym, y_sym, z_sym), grad_u_z)
-
+  grad_u_z_call = lambdify((x_sym, y_sym, z_sym), grad_u_z)
+  
   # Generate training data.
-  coordinates, coordinates_bdy, rhs_data, bdy_data = generate_data(N, u_call, lap_u_call)
+  coordinates, coordinates_bdy = generate_coordinates_cube(N, 0., 1., 2)
+
+  # data values
+  rhs_data = lap_u_call(coordinates[:,0], coordinates[:,1], coordinates[:,2])
+  bdy_data = u_call(coordinates_bdy[:,0], coordinates_bdy[:,1], coordinates_bdy[:,2])
 
   # Generate solution data.
-  xp_test=jnp.linspace(0.,1.,Ntest)
-  yp_test=jnp.linspace(0.,1.,Ntest)
+  coordinates_test = generate_coordinate_grid(Ntest, 0., 1., 2)
+  X_test = coordinates_test[:,0]
+  Y_test = coordinates_test[:,1]
+  Z_test = coordinates_test[:,2]
+  solution = u_call(X_test, Y_test, Z_test)
+  solution_grad_x = grad_u_x_call(X_test,Y_test, Z_test)
+  solution_grad_y = grad_u_y_call(X_test,Y_test, Z_test)
+  solution_grad_z = grad_u_z_call(X_test,Y_test, Z_test)
+  solution_grads = jnp.column_stack((solution_grad_x, solution_grad_y, solution_grad_z))
 
-  X_test, Y_test = jnp.meshgrid(xp_test, yp_test)
+  return coordinates, coordinates_bdy, coordinates_test, rhs_data, bdy_data, solution, solution_grads
 
