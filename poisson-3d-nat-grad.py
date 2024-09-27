@@ -13,7 +13,7 @@ from implementation.loss_functions import OriginalPoissonPINNsLoss, ConsistentPo
 from implementation.optimization import natural_newton_train
 
 ### Tested number of colloation points in each direction and along the boundary.
-Nlist = [10, 20]
+Nlist = [10]
 
 ### Number of points in each direction for plotting and for calculating the error.
 Ntest = 100
@@ -21,7 +21,7 @@ Ntest = 100
 ### Neural Network and training parameters
 width = 20
 depth = 3
-num_steps = 500
+num_steps = 1000
 
 def train_and_test(N, Ntest, exp_type, loss_type):
   # Initialize the network randomly.
