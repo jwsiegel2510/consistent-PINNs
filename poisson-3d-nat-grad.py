@@ -19,9 +19,9 @@ Nlist = [10]
 Ntest = 100
 
 ### Neural Network and training parameters
-width = 20
-depth = 3
-num_steps = 1000
+width = 500
+depth = 1
+num_steps = 250
 
 def train_and_test(N, Ntest, exp_type, loss_type):
   # Initialize the network randomly.

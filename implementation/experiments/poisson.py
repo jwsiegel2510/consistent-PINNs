@@ -68,7 +68,7 @@ def generate_2d_poisson_experiment(N, Ntest, exp_type):
 
   # Select either the harmonic or nonsmooth experiment.
   if exp_type == 'harmonic':  
-    u = sympy.exp(x_sym)*sympy.cos(sympy.pi*y_sym)
+    u = sympy.exp(x_sym)*sympy.cos(y_sym)
     u_call = lambdify((x_sym, y_sym), u)
   elif exp_type == 'smooth':
     u = sympy.exp(2.0*(x_sym + y_sym))*sympy.cos(2.0*sympy.pi*(y_sym - x_sym))/(1.0 + 8.0*x_sym**2 + y_sym**2)
@@ -79,7 +79,7 @@ def generate_2d_poisson_experiment(N, Ntest, exp_type):
     u_call = lambdify((x_sym, y_sym), u)
 
   # Construct negative laplacian of solution.
-  lap_u = -1.0*(sympy.diff(sympy.diff(u, x_sym), x_sym)+sympy.diff(sympy.diff(u, y_sym), y_sym))
+  lap_u = -1.0*(sympy.diff(sympy.diff(u, x_sym), x_sym) + sympy.diff(sympy.diff(u, y_sym), y_sym))
   lap_u_call = lambdify((x_sym, y_sym), lap_u)
 
   # Construct gradient of solution.
@@ -92,7 +92,10 @@ def generate_2d_poisson_experiment(N, Ntest, exp_type):
   coordinates, coordinates_bdy = generate_coordinates_cube(N, 0., 1., 2)
 
   # data values
-  rhs_data = lap_u_call(coordinates[:,0], coordinates[:,1])
+  if lap_u == 0: # This happens if the laplacian vanishes exactly 
+    rhs_data = jnp.zeros(coordinates.shape[0])
+  else:
+    rhs_data = lap_u_call(coordinates[:,0], coordinates[:,1])
   bdy_data = u_call(coordinates_bdy[:,0], coordinates_bdy[:,1])
 
   # Generate solution data.
@@ -129,7 +132,7 @@ def generate_3d_poisson_experiment(N, Ntest, exp_type):
   z_sym = sympy.Symbol('z')
 
   # Currently the only experiment is smooth.
-  u = sympy.exp(x_sym + y_sym + z_sym)*sympy.cos(3.0*sympy.pi*(y_sym - x_sym + z_sym))/(1.0 + x_sym**2 + y_sym**2 + z_sym**4)
+  u = sympy.exp(0.5*(x_sym + y_sym + z_sym))*sympy.cos(0.5*sympy.pi*(y_sym - x_sym + z_sym))/(1.0 + x_sym**2 + y_sym**2 + z_sym**4)
   u_call = lambdify((x_sym, y_sym, z_sym), u)
 
   # Construct negative laplacian of solution.
@@ -148,7 +151,10 @@ def generate_3d_poisson_experiment(N, Ntest, exp_type):
   coordinates, coordinates_bdy = generate_coordinates_cube(N, 0., 1., 3)
 
   # data values
-  rhs_data = lap_u_call(coordinates[:,0], coordinates[:,1], coordinates[:,2])
+  if lap_u == 0: # This happens if the laplacian vanishes exactly 
+    rhs_data = jnp.zeros(coordinates.shape[0])
+  else:
+    rhs_data = lap_u_call(coordinates[:,0], coordinates[:,1], coordinates[:,2])
   bdy_data = u_call(coordinates_bdy[:,0], coordinates_bdy[:,1], coordinates_bdy[:,2])
 
   # Generate solution data.
