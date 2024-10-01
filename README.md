@@ -12,17 +12,7 @@ $-\Delta u = f$ on $\Omega$
 
 $u = g$ on $\partial \Omega$
 
-We solve this equation using both the consistent PINNs and the original PINNs loss function. We test two examples, one where $f = 0$, i.e. u is harmonic, with exact solution given by
-
-$u(x) = e^x\cos(\pi y),$
-
-and the second, where $g = 0$, with exact solution given by
-
-$u(x) = 1000x(1-x)y(1-y)((x - 1/2)^2 + (y - 1/2)^2)^{9/4}.$
-
-This second example was specifically chosen so that the RHS f is not smooth and scaled so that its $L_\infty$-norm is about $1$. 
-
-Based upon our experiments, using the consistent PINNs loss function results in errors which are about 3-5 times smaller than when using the original least squares PINNs loss function. Running the Python script **elliptic-pde-experiments.py** reproduces our experimental results.
+We solve this equation using a variety of loss functions in the PINNs formulation on three test problems in 2d. These experiments can be reproduced by running the Python script **poisson-2d-nat-grad.py**. The results of the experiments and a corresponding discussion can be found in the aforementioned paper.
 
 # Citation
 
@@ -35,7 +25,7 @@ Based upon our experiments, using the consistent PINNs loss function results in 
 
 ## Natural Gradient Newton Optimizer
 
-An additional experiment where we test a Newton optimizer in function space can be found in **elliptic-pde-natural-newton.py**. This optimizer allows us to obtain the same solution accuracy much more efficiently using a much smaller network on the harmonic (i.e. smooth) and non-smooth example problems. The optimizer we have implemented is based upon the paper:
+We use the natural newton optimizer to train the PINNs for each loss function in our experiments. This optimizer allows us to obtain the same solution accuracy much more efficiently using a much smaller network than gradient descent. The optimizer we have implemented is based upon the paper:
 
     @inproceedings{muller2023achieving,
       title={Achieving high accuracy with PINNs via energy natural gradient descent},
