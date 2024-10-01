@@ -12,7 +12,9 @@ $-\Delta u = f$ on $\Omega$
 
 $u = g$ on $\partial \Omega$
 
-We solve this equation using a variety of loss functions in the PINNs formulation on three test problems in 2d. These experiments can be reproduced by running the Python script **poisson-2d-nat-grad.py**. The results of the experiments and a corresponding discussion can be found in the aforementioned paper.
+We solve this equation using a variety of loss functions in the PINNs formulation on three test problems in 2d. These experiments can be reproduced by running the Python script **poisson-2d-nat-grad.py**. The results of the experiments and a corresponding discussion can be found in the aforementioned paper. 
+
+The scripts **poisson-2d-gd.py**, **poisson-3d-nat-grad.py**, **poisson-3d-gd.py** contain additional experiments where different optimizers are used and three dimensional problems are considered, respectively.
 
 # Citation
 
